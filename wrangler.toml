@@ -9,4 +9,4 @@ workers_dev = true
 # ChatGPT/OpenAI origins are included by default in code; add your custom domains here if needed.
 WEREAD_MCP_ALLOWED_ORIGINS = ""
 # The WeRead skill bundle version discovered from weread-skills.zip.
-WEREAD_SKILL_VERSION = "1.0.3"
+WEREAD_SKILL_VERSION = "1.0.4"

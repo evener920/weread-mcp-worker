@@ -12,7 +12,7 @@ export interface WeReadBookSummary {
   author?: string;
   cover?: string;
   category?: string;
-  readingUrl?: string;
+  deepLink?: string;
   webUrl?: string;
 }
 

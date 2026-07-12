@@ -1,4 +1,5 @@
 import { getGatewayUrl, getSkillVersion } from "../utils/env";
+import { DEFAULT_WEREAD_SKILL_VERSION } from "./constants";
 import { WeReadApiError } from "./errors";
 import type { WeReadGatewayResponse } from "./types";
 
@@ -28,7 +29,7 @@ export class WeReadClient {
   constructor(options: WeReadClientOptions) {
     this.apiKey = options.apiKey.trim();
     this.endpoint = trimTrailingSlash(options.endpoint || "https://i.weread.qq.com/api/agent/gateway");
-    this.skillVersion = options.skillVersion || "1.0.3";
+    this.skillVersion = options.skillVersion || DEFAULT_WEREAD_SKILL_VERSION;
     // Some runtimes, including browser/Worker-like environments, require
     // fetch to be invoked with the correct global this binding. Storing the
     // bare global fetch function and calling it later can throw

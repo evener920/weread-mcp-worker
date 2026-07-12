@@ -5,7 +5,7 @@ import { handleMcpPost } from "../src/mcp/server";
 const env: Env = {
   WEREAD_MCP_ENCRYPTION_KEY: "mcp-test-encryption-key",
   WEREAD_MCP_SETUP_PASSWORD: "setup",
-  WEREAD_SKILL_VERSION: "1.0.3"
+  WEREAD_SKILL_VERSION: "1.0.4"
 };
 
 async function post(token: string, body: unknown): Promise<Response> {

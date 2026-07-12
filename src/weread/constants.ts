@@ -1,0 +1,1 @@
+export const DEFAULT_WEREAD_SKILL_VERSION = "1.0.4";

@@ -1,4 +1,4 @@
-import { clampInteger, optionalInteger, asArray, asRecord, wereadBookWebUrl, wereadReadingUrl } from "../utils/format";
+import { clampInteger, optionalInteger, asArray, asRecord, wereadBookWebUrl } from "../utils/format";
 import { WeReadClient } from "../weread/client";
 import { sanitizeWeReadError } from "../weread/errors";
 import { normalizeBookInfo, normalizeHighlights, normalizeProgress, normalizeReadStats, normalizeReviewsMine, summarizeShelf } from "../weread/normalize";
@@ -71,15 +71,15 @@ export const WEREAD_TOOLS: McpToolDefinition[] = [
   {
     name: "weread_get_profile",
     title: "Get WeRead reading profile",
-    description: "Composite profile overview based on the WeRead skill profile workflow: bookshelf summary, recent book reading progress, optional monthly/weekly/yearly/overall reading stats, notebook overview, and highlight counts for recent books.",
+    description: "Composite profile overview based on the WeRead skill profile workflow: bookshelf summary, recent book reading progress, optional monthly/weekly/yearly/overall reading stats, notebook overview, and optional highlight counts for recent books.",
     inputSchema: objectSchema({
       limit: countProperty("Maximum number of books and albums to include in the embedded bookshelf response; shelf counts are still computed from the full response.", 50, 500),
-      progressLimit: countProperty("Maximum recent ebook entries to fetch reading progress for.", 10, 50),
+      progressLimit: countProperty("Maximum recent ebook entries to fetch reading progress for. Defaults to the latest WeRead Skill guidance: 5 books.", 5, 50),
       includeReadingStats: { type: "boolean", default: true, description: "Whether to include /readdata/detail reading statistics." },
       statsMode: { type: "string", enum: ["weekly", "monthly", "annually", "overall"], default: "monthly", description: "Statistics period when includeReadingStats is true." },
       includeNotebookOverview: { type: "boolean", default: true, description: "Whether to include /user/notebooks overview for personal note counts." },
       notebookCount: countProperty("Number of notebook overview rows to include when includeNotebookOverview is true.", 10, 100),
-      highlightCountLimit: { type: "integer", minimum: 0, maximum: 20, default: 5, description: "Number of recent ebooks for which to fetch /book/bookmarklist highlight counts. Set 0 to disable." }
+      highlightCountLimit: { type: "integer", minimum: 0, maximum: 20, default: 0, description: "Number of recent ebooks for which to fetch /book/bookmarklist highlight counts. Defaults to 0 to keep profile lightweight; set a positive value to enable." }
     }),
     annotations: READ_ONLY
   },
@@ -302,6 +302,7 @@ function extractSearchResults(raw: Record<string, unknown>, limit = 20): Array<R
         cover: bookInfo.cover,
         intro: bookInfo.intro,
         category: bookInfo.category,
+        deepLink: typeof bookInfo.deepLink === "string" ? bookInfo.deepLink : undefined,
         newRating: row.newRating ?? bookInfo.newRating,
         newRatingCount: row.newRatingCount ?? bookInfo.newRatingCount,
         readingCount: row.readingCount,
@@ -374,11 +375,11 @@ export async function callWeReadTool(name: string, rawArguments: unknown, contex
 
       case "weread_get_profile": {
         const limit = clampInteger(args.limit, 50, 1, 500);
-        const progressLimit = clampInteger(args.progressLimit, 10, 1, 50);
+        const progressLimit = clampInteger(args.progressLimit, 5, 1, 50);
         const includeReadingStats = args.includeReadingStats !== false;
         const includeNotebookOverview = args.includeNotebookOverview !== false;
         const notebookCount = clampInteger(args.notebookCount, 10, 1, 100);
-        const highlightCountLimit = clampInteger(args.highlightCountLimit, 5, 0, 20);
+        const highlightCountLimit = clampInteger(args.highlightCountLimit, 0, 0, 20);
         const statsMode = optionalString(args, "statsMode") || "monthly";
         if (!["weekly", "monthly", "annually", "overall"].includes(statsMode)) {
           throw new Error("statsMode must be weekly, monthly, annually, or overall.");
@@ -406,7 +407,7 @@ export async function callWeReadTool(name: string, rawArguments: unknown, contex
               author: book.author,
               category: book.category,
               readUpdateTime: book.readUpdateTime,
-              readingUrl: wereadReadingUrl(bookId),
+              deepLink: typeof book.deepLink === "string" ? book.deepLink : undefined,
               webUrl: wereadBookWebUrl(bookId),
               progress: normalizeProgress(progress)
             };
@@ -423,7 +424,7 @@ export async function callWeReadTool(name: string, rawArguments: unknown, contex
             author: fallback.author,
             category: fallback.category,
             readUpdateTime: fallback.readUpdateTime,
-            readingUrl: bookId ? wereadReadingUrl(bookId) : undefined,
+            deepLink: typeof fallback.deepLink === "string" ? fallback.deepLink : undefined,
             webUrl: bookId ? wereadBookWebUrl(bookId) : undefined,
             error: sanitizeWeReadError(result.reason)
           };
@@ -473,7 +474,7 @@ export async function callWeReadTool(name: string, rawArguments: unknown, contex
                   book,
                   bookId,
                   totalNoteCountForBook: reviewCount + noteCount + bookmarkCount,
-                  readingUrl: bookId ? wereadReadingUrl(bookId) : undefined,
+                  deepLink: typeof book.deepLink === "string" ? book.deepLink : undefined,
                   webUrl: bookId ? wereadBookWebUrl(bookId) : undefined
                 };
               })
@@ -503,7 +504,7 @@ export async function callWeReadTool(name: string, rawArguments: unknown, contex
 
         return toolResult({
           generatedAt: new Date().toISOString(),
-          profileScope: "bookshelf + recent reading progress + optional reading stats + optional notebook overview + optional recent highlight counts",
+          profileScope: "bookshelf + recent reading progress + optional reading stats + optional notebook overview; recent highlight counts only when explicitly enabled",
           shelf,
           recentReading,
           readingStats,
@@ -526,7 +527,7 @@ export async function callWeReadTool(name: string, rawArguments: unknown, contex
           const chapter = asRecord(item);
           return {
             ...chapter,
-            readingUrl: chapter.chapterUid !== undefined ? `${wereadReadingUrl(bookId)}&chapterUid=${encodeURIComponent(String(chapter.chapterUid))}` : undefined
+            deepLink: typeof chapter.deepLink === "string" ? chapter.deepLink : undefined
           };
         });
         return toolResult({ ...raw, totalChapters: asArray(raw.chapters).length, returnedChapters: chapters.length, chapters });
@@ -569,7 +570,7 @@ export async function callWeReadTool(name: string, rawArguments: unknown, contex
             book,
             bookId,
             totalNoteCountForBook: reviewCount + noteCount + bookmarkCount,
-            readingUrl: bookId ? wereadReadingUrl(bookId) : undefined,
+            deepLink: typeof book.deepLink === "string" ? book.deepLink : typeof row.deepLink === "string" ? row.deepLink : undefined,
             webUrl: bookId ? wereadBookWebUrl(bookId) : undefined
           };
         });

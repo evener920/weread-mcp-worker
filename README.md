@@ -53,7 +53,7 @@ Content-Type: application/json
   "api_name": "/store/search",
   "keyword": "三体",
   "count": 10,
-  "skill_version": "1.0.3"
+  "skill_version": "1.0.4"
 }
 ```
 
@@ -67,7 +67,7 @@ Content-Type: application/json
 | `fetch` | `/book/info` | OpenAI data-only 兼容详情工具，支持 `book:<bookId>` |
 | `weread_search_books` | `/store/search` | 搜索书籍、作者、有声书、全文、书单等 |
 | `weread_get_bookshelf` | `/shelf/sync` | 获取书架概览，正确统计电子书、专辑/有声书和文章收藏入口 |
-| `weread_get_profile` | `/shelf/sync` + `/book/getprogress` + `/readdata/detail` + `/user/notebooks` + 可选 `/book/bookmarklist` | 获取综合阅读概况，对应 Skill 里的 profile 工作流 |
+| `weread_get_profile` | `/shelf/sync` + `/book/getprogress` + `/readdata/detail` + `/user/notebooks` + 可选 `/book/bookmarklist` | 获取综合阅读概况，对应 Skill 里的 profile 工作流；默认只查最近 5 本书进度，不默认统计划线数 |
 | `weread_get_book_info` | `/book/info` | 获取书籍基本信息 |
 | `weread_get_book_chapters` | `/book/chapterinfo` | 获取章节目录和 `chapterUid` |
 | `weread_get_reading_progress` | `/book/getprogress` | 获取阅读进度和阅读时长 |
@@ -363,7 +363,7 @@ npm run deploy
 | `WEREAD_MCP_ENCRYPTION_KEY` | Cloudflare secret | 是 | 是 | 用于加密/解密 URL path token |
 | `WEREAD_MCP_SETUP_PASSWORD` | Cloudflare secret | 是，除非使用 hash | 是 | Setup 页面密码 |
 | `WEREAD_MCP_SETUP_PASSWORD_SHA256` | Cloudflare secret | 否 | 是 | Setup 页面密码的 SHA-256 hex；设置后优先使用 |
-| `WEREAD_SKILL_VERSION` | var | 否 | 否 | 微信读书 Skill 版本，默认 `1.0.3` |
+| `WEREAD_SKILL_VERSION` | var | 否 | 否 | 微信读书 Skill 版本，默认 `1.0.4` |
 | `WEREAD_GATEWAY_URL` | var/secret | 否 | 否 | 微信读书 Agent API Gateway，默认官方网关 |
 | `WEREAD_MCP_ALLOWED_ORIGINS` | var | 否 | 否 | 额外允许的浏览器 Origin，逗号分隔 |
 
@@ -386,10 +386,28 @@ wrk-xxxxxxxx
 当前从 zip 中识别到的版本是：
 
 ```text
-1.0.3
+1.0.4
 ```
 
 如微信读书接口返回 `upgrade_info`，说明上游 Skill 版本要求变化，需要更新项目中的 `WEREAD_SKILL_VERSION` 或代码。
+
+### deepLink 规则
+
+微信读书 Skill `1.0.4` 要求优先使用接口回包中的 `deepLink` 字段。
+
+本项目遵循该规则：
+
+- 如果接口返回 `deepLink`，会原样保留并返回给 MCP 客户端。
+- 如果接口没有返回 `deepLink`，项目不会主动拼接 `weread://` 深度链接。
+- 项目仍可能返回普通网页 `webUrl`，作为浏览器可打开的辅助链接。
+
+### `weread_get_profile` 默认行为
+
+`weread_get_profile` 已按微信读书 Skill `1.0.4` 调整为更轻量的默认行为：
+
+- 默认 `progressLimit = 5`，只查询最近阅读的 5 本电子书进度。
+- 默认 `highlightCountLimit = 0`，不额外逐本调用 `/book/bookmarklist` 统计划线数。
+- 默认使用 `/user/notebooks` 返回笔记概览；如果需要单本书笔记内容，再调用 `weread_get_book_notes`。
 
 ### 笔记口径
 

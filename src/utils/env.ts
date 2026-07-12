@@ -1,3 +1,5 @@
+import { DEFAULT_WEREAD_SKILL_VERSION } from "../weread/constants";
+
 export function requireEnv(value: string | undefined, name: string): string {
   if (!value || !value.trim()) {
     throw new Error(`Missing required environment secret: ${name}`);
@@ -6,7 +8,7 @@ export function requireEnv(value: string | undefined, name: string): string {
 }
 
 export function getSkillVersion(env: Pick<Env, "WEREAD_SKILL_VERSION">): string {
-  return env.WEREAD_SKILL_VERSION?.trim() || "1.0.3";
+  return env.WEREAD_SKILL_VERSION?.trim() || DEFAULT_WEREAD_SKILL_VERSION;
 }
 
 export function getGatewayUrl(env: Pick<Env, "WEREAD_GATEWAY_URL">): string {

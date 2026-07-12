@@ -1,4 +1,4 @@
-import { asArray, asRecord, secondsToDuration, unixSecondsToDate, wereadBookWebUrl, wereadBookmarkUrl, wereadReadingUrl } from "../utils/format";
+import { asArray, asRecord, secondsToDuration, unixSecondsToDate, wereadBookWebUrl } from "../utils/format";
 
 function stringField(record: Record<string, unknown>, key: string): string | undefined {
   const value = record[key];
@@ -15,7 +15,7 @@ export function normalizeBookInfo(value: unknown): Record<string, unknown> {
   const bookId = stringField(book, "bookId") || stringField(book, "bookid") || "";
   return {
     ...book,
-    readingUrl: bookId ? wereadReadingUrl(bookId) : undefined,
+    deepLink: stringField(book, "deepLink"),
     webUrl: bookId ? wereadBookWebUrl(bookId) : undefined,
     publishDate: unixSecondsToDate(numberField(book, "publishTime"))
   };
@@ -40,7 +40,7 @@ export function summarizeShelf(raw: Record<string, unknown>, limit: number): Rec
       finishReading: book.finishReading,
       isTop: book.isTop,
       secret: book.secret,
-      readingUrl: bookId ? wereadReadingUrl(bookId) : undefined,
+      deepLink: stringField(book, "deepLink"),
       webUrl: bookId ? wereadBookWebUrl(bookId) : undefined
     };
   });
@@ -101,15 +101,12 @@ export function normalizeProgress(raw: Record<string, unknown>): Record<string, 
 
 export function normalizeHighlights(raw: Record<string, unknown>, limit: number): Record<string, unknown> {
   const book = asRecord(raw.book);
-  const bookId = stringField(book, "bookId") || stringField(asRecord(asArray(raw.updated)[0]), "bookId") || "";
   const updated = asArray(raw.updated).slice(0, limit).map((item) => {
     const mark = asRecord(item);
-    const chapterUid = mark.chapterUid as string | number | undefined;
-    const range = typeof mark.range === "string" ? mark.range : undefined;
     return {
       ...mark,
       createDate: unixSecondsToDate(numberField(mark, "createTime")),
-      deepLink: bookId && chapterUid !== undefined && range ? wereadBookmarkUrl(bookId, chapterUid, range) : undefined
+      deepLink: stringField(mark, "deepLink")
     };
   });
   return {

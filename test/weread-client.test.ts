@@ -9,10 +9,10 @@ describe("WeReadClient", () => {
       captured = JSON.parse(String(init?.body));
       return new Response(JSON.stringify({ ok: true, books: [] }), { status: 200, headers: { "content-type": "application/json" } });
     };
-    const client = new WeReadClient({ apiKey: "wrk-test", skillVersion: "1.0.3", fetcher });
+    const client = new WeReadClient({ apiKey: "wrk-test", skillVersion: "1.0.4", fetcher });
     const result = await client.call("/user/notebooks", { count: 20, lastSort: 123 });
     expect(result.ok).toBe(true);
-    expect(captured).toEqual({ api_name: "/user/notebooks", count: 20, lastSort: 123, skill_version: "1.0.3" });
+    expect(captured).toEqual({ api_name: "/user/notebooks", count: 20, lastSort: 123, skill_version: "1.0.4" });
     expect(captured.params).toBeUndefined();
   });
 
@@ -29,7 +29,7 @@ describe("WeReadClient", () => {
       sawCorrectThis = this === globalThis;
       if (!sawCorrectThis) throw new TypeError("Illegal invocation: function called with incorrect this reference");
       const body = JSON.parse(String(init?.body));
-      return new Response(JSON.stringify({ ok: true, api_name: body.api_name }), { status: 200 });
+      return new Response(JSON.stringify({ ok: true, api_name: body.api_name, skill_version: body.skill_version }), { status: 200 });
     } as typeof fetch;
 
     try {
@@ -37,6 +37,7 @@ describe("WeReadClient", () => {
       const client = new WeReadClient({ apiKey: "example-api-key" });
       const result = await client.call("/shelf/sync");
       expect(result.ok).toBe(true);
+      expect(result.skill_version).toBe("1.0.4");
       expect(sawCorrectThis).toBe(true);
     } finally {
       globalThis.fetch = originalFetch;

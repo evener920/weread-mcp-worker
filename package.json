@@ -1,6 +1,6 @@
 {
   "name": "weread-mcp-worker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A single-user WeRead MCP server for ChatGPT, deployed on Cloudflare Workers.",
   "type": "module",
   "private": false,

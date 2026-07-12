@@ -4,7 +4,7 @@ import worker from "../src/index";
 const env: Env = {
   WEREAD_MCP_ENCRYPTION_KEY: "setup-test-encryption-key",
   WEREAD_MCP_SETUP_PASSWORD: "setup-password",
-  WEREAD_SKILL_VERSION: "1.0.3"
+  WEREAD_SKILL_VERSION: "1.0.4"
 };
 
 describe("setup endpoint", () => {

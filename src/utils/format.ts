@@ -26,34 +26,8 @@ export function unixSecondsToDate(seconds: unknown): string | undefined {
   return date.toISOString().slice(0, 10);
 }
 
-export function wereadReadingUrl(bookId: string): string {
-  return `weread://reading?bId=${encodeURIComponent(bookId)}`;
-}
-
 export function wereadBookWebUrl(bookId: string): string {
   return `https://weread.qq.com/web/reader/${encodeURIComponent(bookId)}`;
-}
-
-export function parseRange(range: unknown): { rangeStart: string; rangeEnd: string } | undefined {
-  if (typeof range !== "string") return undefined;
-  const [rangeStart, rangeEnd] = range.split("-");
-  if (!rangeStart || !rangeEnd) return undefined;
-  return { rangeStart, rangeEnd };
-}
-
-export function wereadBookmarkUrl(bookId: string, chapterUid: string | number, range: string, userVid?: string | number): string | undefined {
-  const parsed = parseRange(range);
-  if (!parsed) return undefined;
-  const params = new URLSearchParams({
-    bookId,
-    chapterUid: String(chapterUid),
-    rangeStart: parsed.rangeStart,
-    rangeEnd: parsed.rangeEnd
-  });
-  if (userVid !== undefined && userVid !== null && String(userVid)) {
-    params.set("userVid", String(userVid));
-  }
-  return `weread://bestbookmark?${params.toString()}`;
 }
 
 export function asRecord(value: unknown): Record<string, unknown> {
