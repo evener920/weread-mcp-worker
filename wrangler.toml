@@ -1,4 +1,4 @@
-name = "weread-mcp-worker"
+name = "weread-mcp"
 main = "src/index.ts"
 compatibility_date = "2026-05-16"
 workers_dev = true
